@@ -151,8 +151,6 @@
                 }
             };
 
-
-
             // ======================
             // SAVE
             // ======================
@@ -221,9 +219,6 @@
                         DevExpress.ui.notify(xhr.responseJSON?.message ?? 'Error', "error", 3000);
                     });
             });
-
-
-
 
             // ======================
             // TOGGLE ACTIVE
