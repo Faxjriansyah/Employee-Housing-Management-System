@@ -110,6 +110,20 @@ class RoomOccupancyController extends Controller
 }
 
 
+public function stats()
+{
+    return DB::table('room_occupancies')
+        ->join('rooms', 'rooms.id', '=', 'room_occupancies.room_id')
+        ->select(
+            'rooms.room_code',
+            'room_occupancies.type',
+            DB::raw('COUNT(room_occupancies.id) as total_usage')
+        )
+        ->groupBy('rooms.room_code', 'room_occupancies.type')
+        ->orderBy('rooms.room_code')
+        ->get();
+}
+
 
 
 

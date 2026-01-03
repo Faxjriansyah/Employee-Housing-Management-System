@@ -235,6 +235,30 @@
             min-height: calc(100vh - 180px);
         }
 
+        /* Style untuk logout button di sidebar */
+        .logout-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 15px;
+            color: #fca5a5;
+            text-decoration: none;
+            transition: all 0.2s;
+            margin: 0 5px;
+            border-radius: 6px;
+            white-space: nowrap;
+            background: none;
+            border: none;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .logout-btn:hover {
+            background: rgba(239, 68, 68, 0.1);
+            color: #f87171;
+        }
+
         @media (max-width: 768px) {
             .sidebar {
                 position: fixed;
@@ -277,7 +301,7 @@
                     <div class="logo">
                         <i class="fas fa-building"></i>
                     </div>
-                    <div class="logo-text">Employee Housing</div>
+                    <div class="logo-text">EHMS </div>
                 </div>
                 <button class="toggle-btn" id="sidebarToggle">
                     <i class="fas fa-bars"></i>
@@ -305,18 +329,19 @@
                     <span class="menu-text">Room Occupancies</span>
                 </a>
 
-                <a href="/occupancies/history" class="menu-item">
-                    <i class="fas fa-clock-rotate-left"></i>
-                    <span class="menu-text">Occupancy History</span>
+                <a href="/reports/occupancy" class="menu-item">
+                    <i class="fas fa-file"></i>
+                    <span class="menu-text">Occupancy Report</span>
                 </a>
 
             </div>
 
             <div style="position: absolute; bottom: 20px; left: 0; right: 0; padding: 0 15px;">
-                <div class="menu-item">
-                    <i class="fas fa-question-circle"></i>
-                    <span class="menu-text">Help & Support</span>
-                </div>
+                <!-- Logout Button di sini -->
+                <button class="logout-btn" id="logoutButton">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span class="menu-text">Logout</span>
+                </button>
             </div>
         </div>
 
@@ -404,6 +429,103 @@
                 headers: {
                     'X-CSRF-TOKEN': '{{ csrf_token() }}',
                     'Content-Type': 'application/json'
+                }
+            });
+
+            // ======================
+            // LOGOUT FUNCTIONALITY
+            // ======================
+            $('#logoutButton').click(function() {
+                // Tampilkan konfirmasi menggunakan DevExtreme dialog
+                DevExpress.ui.dialog.confirm(
+                    "Are you sure you want to logout?",
+                    "Confirm Logout"
+                ).done(function(dialogResult) {
+                    if (dialogResult) {
+                        // Tampilkan loading indicator
+                        const loadingToast = DevExpress.ui.notify({
+                            message: "Logging out...",
+                            type: "info",
+                            displayTime: 0, // indefinite
+                            closeOnClick: false
+                        });
+
+                        // Kirim request logout
+                        $.ajax({
+                            url: '/logout',
+                            method: 'POST',
+                            success: function() {
+                                // Redirect ke halaman login
+                                window.location.href = '/login';
+                            },
+                            error: function(xhr) {
+                                loadingToast.hide();
+
+                                // Jika AJAX gagal, coba redirect langsung
+                                if (xhr.status === 401 || xhr.status === 419) {
+                                    // Session expired, redirect ke login
+                                    window.location.href = '/login';
+                                } else {
+                                    // Tampilkan error
+                                    DevExpress.ui.notify(
+                                        "Logout failed. Please try again.",
+                                        "error",
+                                        3000
+                                    );
+                                }
+                            }
+                        });
+                    }
+                });
+            });
+
+            // Juga tambahkan logout ke user profile jika diklik
+            $('.user-profile').click(function() {
+                // Buka popup menu untuk logout dari user profile
+                const popupMenu = $('#userProfileMenu');
+                if (!popupMenu.length) {
+                    // Buat popup menu
+                    $('body').append(`
+                        <div id="userProfileMenu" style="position: fixed; z-index: 9999;"></div>
+                    `);
+
+                    $('#userProfileMenu').dxPopup({
+                        contentTemplate: function() {
+                            return `
+                                <div style="padding: 10px;">
+                                    <div style="padding: 8px 12px; font-weight: 600; color: #374151; border-bottom: 1px solid #e5e7eb;">
+                                        Account Menu
+                                    </div>
+                                    <button id="profileLogoutBtn" style="width: 100%; padding: 10px; text-align: left; border: none; background: none; color: #ef4444; cursor: pointer; border-radius: 4px;">
+                                        <i class="fas fa-sign-out-alt me-2"></i> Logout
+                                    </button>
+                                </div>
+                            `;
+                        },
+                        showTitle: false,
+                        width: 200,
+                        height: 'auto',
+                        position: {
+                            of: '.user-profile',
+                            offset: {
+                                y: 10,
+                                x: -150
+                            }
+                        },
+                        shading: false,
+                        closeOnOutsideClick: true,
+                        onHidden: function() {
+                            $('#userProfileMenu').remove();
+                        }
+                    }).dxPopup('instance');
+
+                    // Tampilkan popup
+                    $('#userProfileMenu').dxPopup('show');
+
+                    // Handle logout dari popup
+                    $(document).on('click', '#profileLogoutBtn', function() {
+                        $('#logoutButton').click();
+                    });
                 }
             });
         });
